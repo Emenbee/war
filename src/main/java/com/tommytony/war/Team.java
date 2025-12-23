@@ -326,7 +326,7 @@ public class Team {
 				Location originalLocation = signBlock.getLocation();
 				Location hologramLocation = originalLocation.clone().add(0, 2, 1);
 
-				String hologramName = "Z@@@war_team_" + this.warzone.getName() + "_" + this.name;
+				String hologramName = "____war_team_" + this.warzone.getName() + "_" + this.name;
 				
 				// Check if a hologram with this name already exists (e.g., from previous session)
 				teamHologram = DHAPI.getHologram(hologramName);

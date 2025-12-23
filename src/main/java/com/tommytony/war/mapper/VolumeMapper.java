@@ -94,11 +94,15 @@ public class VolumeMapper {
 			String data = stringCache.get(query.getInt("data"));
 			String metadata = stringCache.get(query.getInt("metadata"));
 
-			// Try to look up the material. May fail due to mods or MC updates.
-			Material mat = null;
-			try {
-				mat = Material.valueOf(type);
-			} catch (IllegalArgumentException e) {
+			// Try to look up the material (modern names first, then legacy)
+			Material mat = Material.matchMaterial(type);
+			if (mat == null) {
+				// Try with legacy name support for pre-1.13 worlds
+				mat = Material.matchMaterial(type, true);
+			}
+			
+			// If still not found, log warning and skip this block
+			if (mat == null) {
 				War.war.getLogger().log(Level.WARNING, "Failed to parse block type. " + getBlockDescriptor(modify.getLocation(), type, data, metadata));
 				continue;
 			}
@@ -166,18 +170,12 @@ public class VolumeMapper {
 
 					// Records
 					if (modify instanceof Jukebox) {
-						if (metadata != null && !metadata.equals("items: - null")) {
-							try {
-								Material material = Material.matchMaterial(metadata);
-								if (material != null) {
-									((Jukebox) modify).setRecord(new ItemStack(material));
-								} else {
-									War.war.getLogger().log(Level.WARNING, "Invalid record type: " + metadata);
-								}
-							} catch (Exception e) {
-								War.war.getLogger().log(Level.WARNING, "Error setting jukebox record: " + metadata, e);
-							}
-						}
+					if (metadata != null && !metadata.isEmpty()) {
+						Material material = Material.matchMaterial(metadata);
+						if (material != null && material.toString().startsWith("MUSIC_DISC_")) {
+							((Jukebox) modify).setPlaying(material);
+						} else if (material != null) {
+							War.war.getLogger().log(Level.WARNING, "Invalid record type: " + metadata);
 					}
 
 
@@ -401,7 +399,8 @@ public class VolumeMapper {
 						config.set("items", items);
 						metadata = config.saveToString();
 					} else if (state instanceof Jukebox) {
-						metadata = ((Jukebox) state).getPlaying().toString();
+						Material playing = ((Jukebox) state).getPlaying();
+						metadata = playing != null ? playing.toString() : "";
 					} else if (state instanceof Skull) {
 						OfflinePlayer player = ((Skull) state).getOwningPlayer();
 						metadata = player == null ? "" : player.getUniqueId().toString();
