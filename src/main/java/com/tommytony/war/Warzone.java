@@ -1125,8 +1125,8 @@ public class Warzone {
 				if(t != team) {
 					for(Player p : t.getPlayers()) {
 						TabPlayer tp = TabAPI.getInstance().getPlayer(p.getUniqueId());
-						TabAPI.getInstance().getTeamManager().hideNametag(tp, tplayer);
-						TabAPI.getInstance().getTeamManager().hideNametag(tplayer, tp);
+						TabAPI.getInstance().getNameTagManager().hideNameTag(tp, tplayer);
+						TabAPI.getInstance().getNameTagManager().hideNameTag(tplayer, tp);
 					}
 				}
 			}
@@ -1433,8 +1433,8 @@ public class Warzone {
 				if(t != playerTeam) {
 					for(Player p : t.getPlayers()) {
 						TabPlayer tp = TabAPI.getInstance().getPlayer(p.getUniqueId());
-						TabAPI.getInstance().getTeamManager().showNametag(tp, tplayer);
-						TabAPI.getInstance().getTeamManager().showNametag(tplayer, tp);
+						TabAPI.getInstance().getNameTagManager().showNameTag(tp, tplayer);
+						TabAPI.getInstance().getNameTagManager().showNameTag(tplayer, tp);
 					}
 				}
 			}
