@@ -10,8 +10,8 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.logging.Level;
 
-import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
-import me.filoghost.holographicdisplays.api.hologram.Hologram;
+import eu.decentsoftware.holograms.api.DHAPI;
+import eu.decentsoftware.holograms.api.holograms.Hologram;
 import org.apache.commons.lang.Validate;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -323,22 +323,24 @@ public class Team {
 			// create a new hologram at the signBlock's location
 			if (teamHologram == null) {
 				// Only create a new hologram if it doesn't already exist
-				HolographicDisplaysAPI HologramsAPI = HolographicDisplaysAPI.get(War.war); // The API instance for your plugin
-
 				Location originalLocation = signBlock.getLocation();
-				Location hologramLocation = originalLocation.add(0, 2, 1);
+				Location hologramLocation = originalLocation.clone().add(0, 2, 1);
 
-				teamHologram = HologramsAPI.createHologram(hologramLocation);
-			} else {
-				// If the hologram already exists, clear it so we can add the updated lines
-				teamHologram.getLines().clear();
+				String hologramName = "Z@@@war_team_" + this.warzone.getName() + "_" + this.name;
+				
+				// Check if a hologram with this name already exists (e.g., from previous session)
+				teamHologram = DHAPI.getHologram(hologramName);
+				if (teamHologram != null) {
+					// Update location if hologram exists but is in wrong place
+					DHAPI.moveHologram(teamHologram, hologramLocation);
+				} else {
+					// Create new hologram if it doesn't exist
+					teamHologram = DHAPI.createHologram(hologramName, hologramLocation);
+				}
 			}
 
-
-			// add each line to the hologram
-			for (String line : lines) {
-				teamHologram.getLines().appendText(line);
-			}
+			// Clear existing lines and add updated ones
+			DHAPI.setHologramLines(teamHologram, java.util.Arrays.asList(lines));
 		}
 	}
 
@@ -483,7 +485,7 @@ public class Team {
 	}
 	public void resetHologram() {
 		if (teamHologram != null) {
-			teamHologram.delete();
+			DHAPI.removeHologram(teamHologram.getName());
 			teamHologram = null;  // Clear the reference so we know the hologram has been deleted
 		}
 	}

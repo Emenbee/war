@@ -5,7 +5,7 @@ description: ${project.description}
 author: tommytony, iAngry
 website: ${project.url}
 main: com.tommytony.war.War
-softdepend: [WorldEdit, Vault, TAB, HolographicDisplays]
+softdepend: [WorldEdit, Vault, TAB, DecentHolograms]
 permissions:
   war.*:
     description: Full War permissions. Create and destroy warzones. Change War configuration.

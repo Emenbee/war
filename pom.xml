@@ -169,11 +169,17 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency>
+    <!-- <dependency>
       <groupId>me.filoghost.holographicdisplays</groupId>
       <artifactId>holographicdisplays-api</artifactId>
       <version>3.0.0</version>
       <scope>provided</scope>
+    </dependency> -->
+    <dependency>
+        <groupId>com.github.decentsoftware-eu</groupId>
+        <artifactId>decentholograms</artifactId>
+        <version>2.9.9</version>
+        <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.spigotmc</groupId>
