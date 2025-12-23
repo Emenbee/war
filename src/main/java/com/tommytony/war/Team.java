@@ -376,9 +376,9 @@ public class Team {
 		warzone.updateScoreboard();
 		
 		if(warzone.getWarzoneConfig().getBoolean(WarzoneConfig.DISABLECOOLDOWN)) {
-			player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(1024.0);
+			player.getAttribute(Attribute.ATTACK_SPEED).setBaseValue(1024.0);
 		} else {
-			player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(4.0);
+			player.getAttribute(Attribute.ATTACK_SPEED).setBaseValue(4.0);
 		}
 		
 		if(warzone.getWarzoneConfig().getBoolean(WarzoneConfig.RAPIDDAMAGE)) {
@@ -445,7 +445,7 @@ public class Team {
 		this.warzone.getLoadoutSelections().remove(player);
 		warzone.updateScoreboard();
 		player.setMaximumNoDamageTicks(20);
-		player.getAttribute(Attribute.GENERIC_ATTACK_SPEED).setBaseValue(4.0);
+		player.getAttribute(Attribute.ATTACK_SPEED).setBaseValue(4.0);
 	}
 
 	public int getRemainingLives() {

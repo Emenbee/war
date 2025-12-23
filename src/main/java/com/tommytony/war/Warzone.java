@@ -501,7 +501,7 @@ public class Warzone {
 
 		// Fill hp
 		player.setRemainingAir(player.getMaximumAir());
-		AttributeInstance ai = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+		AttributeInstance ai = player.getAttribute(Attribute.MAX_HEALTH);
 		for (AttributeModifier mod : ai.getModifiers()) {
 			ai.removeModifier(mod);
 		}
@@ -575,8 +575,8 @@ public class Warzone {
 		int respawnTime = team.getTeamConfig().resolveInt(TeamConfig.RESPAWNTIMER);
 		int respawnTimeTicks = respawnTime * 20;
 		if (respawnTimeTicks > 0) {
-			player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW, respawnTimeTicks, 255));
-			player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP, respawnTimeTicks, 200));
+			player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, respawnTimeTicks, 255));
+			player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, respawnTimeTicks, 200));
 			player.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, respawnTimeTicks, 255));
 			player.sendTitle("", ChatColor.RED + MessageFormat.format(War.war.getString("zone.spawn.timer.title"), respawnTime), 1, respawnTimeTicks, 10);
 		}
@@ -716,7 +716,7 @@ public class Warzone {
 
 			this.playerInvFromInventoryStash(playerInv, originalState);
 			player.setGameMode(originalState.getGamemode());
-			double maxH = player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+			double maxH = player.getAttribute(Attribute.MAX_HEALTH).getValue();
 			player.setHealth(Math.max(Math.min(originalState.getHealth(), maxH), 0.0D));
 			player.setExhaustion(originalState.getExhaustion());
 			player.setSaturation(originalState.getSaturation());
@@ -743,21 +743,25 @@ public class Warzone {
 	}
 
 	private void playerInvFromInventoryStash(PlayerInventory playerInv, PlayerState originalContents) {
+		// Clear entire inventory including armor slots
 		playerInv.clear();
+		playerInv.setHelmet(null);
+		playerInv.setChestplate(null);
+		playerInv.setLeggings(null);
+		playerInv.setBoots(null);
 
-		playerInv.clear(playerInv.getSize() + 0);
-		playerInv.clear(playerInv.getSize() + 1);
-		playerInv.clear(playerInv.getSize() + 2);
-		playerInv.clear(playerInv.getSize() + 3); // helmet/blockHead
-
-		int invIndex = 0;
-		for (ItemStack item : originalContents.getContents()) {
+		// Restore main inventory contents (slots 0-35 only)
+		// Note: getContents() may return more than 36 items (includes armor/offhand in modern MC)
+		// but we only restore the main inventory slots here
+		ItemStack[] contents = originalContents.getContents();
+		for (int invIndex = 0; invIndex < Math.min(contents.length, 36); invIndex++) {
+			ItemStack item = contents[invIndex];
 			if (item != null && item.getType() != Material.AIR) {
 				playerInv.setItem(invIndex, item);
 			}
-			invIndex++;
 		}
 
+		// Restore armor slots using dedicated methods
 		if (originalContents.getHelmet() != null) {
 			playerInv.setHelmet(originalContents.getHelmet());
 		}

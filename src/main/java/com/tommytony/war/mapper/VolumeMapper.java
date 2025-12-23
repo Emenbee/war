@@ -538,66 +538,47 @@ public class VolumeMapper {
 	 * @return Corrected location
 	 */
 	private static Location calculatePainting(Art art, BlockFace facing, Location loc) {
-		switch(art) {
-
-			// 1x1
-			case ALBAN:
-			case AZTEC:
-			case AZTEC2:
-			case BOMB:
-			case KEBAB:
-			case PLANT:
-			case WASTELAND:
-				return loc; // No calculation needed.
-
-			// 1x2
-			case GRAHAM:
-			case WANDERER:
-				return loc.getBlock().getLocation().add(0, -1, 0);
-
-			// 2x1
-			case CREEBET:
-			case COURBET:
-			case POOL:
-			case SEA:
-			case SUNSET:    // Use same as 4x3
-
-				// 4x3
-			case DONKEY_KONG:
-			case SKELETON:
-				if(facing == BlockFace.WEST)
-					return loc.getBlock().getLocation().add(0, 0, -1);
-				else if(facing == BlockFace.SOUTH)
-					return loc.getBlock().getLocation().add(-1, 0, 0);
-				else
-					return loc;
-
-				// 2x2
-			case BUST:
-			case MATCH:
-			case SKULL_AND_ROSES:
-			case STAGE:
-			case VOID:
-			case WITHER:    // Use same as 4x2
-
-				// 4x2
-			case FIGHTERS:  // Use same as 4x4
-
-				// 4x4
-			case BURNING_SKULL:
-			case PIGSCENE:
-			case POINTER:
-				if(facing == BlockFace.WEST)
-					return loc.getBlock().getLocation().add(0, -1, -1);
-				else if(facing == BlockFace.SOUTH)
-					return loc.getBlock().getLocation().add(-1, -1, 0);
-				else
-					return loc.add(0, -1, 0);
-
-				// Unsupported artwork
-			default:
+		String artKey = art.getKey().getKey();
+		
+		// 1x1 paintings (no calculation needed)
+		if (artKey.equals("alban") || artKey.equals("aztec") || artKey.equals("aztec2") || 
+		    artKey.equals("bomb") || artKey.equals("kebab") || artKey.equals("plant") || 
+		    artKey.equals("wasteland")) {
+			return loc;
+		}
+		
+		// 1x2 paintings
+		if (artKey.equals("graham") || artKey.equals("wanderer")) {
+			return loc.getBlock().getLocation().add(0, -1, 0);
+		}
+		
+		// 2x1 and 4x3 paintings (same calculation)
+		if (artKey.equals("creebet") || artKey.equals("courbet") || artKey.equals("pool") || 
+		    artKey.equals("sea") || artKey.equals("sunset") || artKey.equals("donkey_kong") || 
+		    artKey.equals("skeleton")) {
+			if (facing == BlockFace.WEST)
+				return loc.getBlock().getLocation().add(0, 0, -1);
+			else if (facing == BlockFace.SOUTH)
+				return loc.getBlock().getLocation().add(-1, 0, 0);
+			else
 				return loc;
 		}
+		
+		// 2x2, 4x2, and 4x4 paintings (same calculation)
+		if (artKey.equals("bust") || artKey.equals("match") || artKey.equals("skull_and_roses") || 
+		    artKey.equals("stage") || artKey.equals("void") || artKey.equals("wither") || 
+		    artKey.equals("fighters") || artKey.equals("burning_skull") || artKey.equals("pigscene") || 
+		    artKey.equals("pointer")) {
+			if (facing == BlockFace.WEST)
+				return loc.getBlock().getLocation().add(0, -1, -1);
+			else if (facing == BlockFace.SOUTH)
+				return loc.getBlock().getLocation().add(-1, -1, 0);
+			else
+				return loc.add(0, -1, 0);
+		}
+		
+		// Unsupported or unknown artwork
+		return loc;
 	}
 
 }
