@@ -170,12 +170,18 @@ public class VolumeMapper {
 
 					// Records
 					if (modify instanceof Jukebox) {
-					if (metadata != null && !metadata.isEmpty()) {
-						Material material = Material.matchMaterial(metadata);
-						if (material != null && material.toString().startsWith("MUSIC_DISC_")) {
-							((Jukebox) modify).setPlaying(material);
-						} else if (material != null) {
-							War.war.getLogger().log(Level.WARNING, "Invalid record type: " + metadata);
+						if (metadata != null && !metadata.equals("items: - null")) {
+							try {
+								Material material = Material.matchMaterial(metadata);
+								if (material != null) {
+									((Jukebox) modify).setRecord(new ItemStack(material));
+								} else {
+									War.war.getLogger().log(Level.WARNING, "Invalid record type: " + metadata);
+								}
+							} catch (Exception e) {
+								War.war.getLogger().log(Level.WARNING, "Error setting jukebox record: " + metadata, e);
+							}
+						}
 					}
 
 
@@ -399,8 +405,7 @@ public class VolumeMapper {
 						config.set("items", items);
 						metadata = config.saveToString();
 					} else if (state instanceof Jukebox) {
-						Material playing = ((Jukebox) state).getPlaying();
-						metadata = playing != null ? playing.toString() : "";
+						metadata = ((Jukebox) state).getPlaying().toString();
 					} else if (state instanceof Skull) {
 						OfflinePlayer player = ((Skull) state).getOwningPlayer();
 						metadata = player == null ? "" : player.getUniqueId().toString();
