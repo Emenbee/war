@@ -44,6 +44,7 @@ import com.tommytony.war.config.FlagReturn;
 import com.tommytony.war.config.InventoryBag;
 import com.tommytony.war.config.KillstreakReward;
 import com.tommytony.war.config.MySQLConfig;
+import com.tommytony.war.config.StatsConfig;
 import com.tommytony.war.config.ScoreboardType;
 import com.tommytony.war.config.TeamConfig;
 import com.tommytony.war.config.TeamConfigBag;
@@ -60,6 +61,7 @@ import com.tommytony.war.event.WarEntityListener;
 import com.tommytony.war.event.WarPlayerListener;
 import com.tommytony.war.job.CapturePointTimer;
 import com.tommytony.war.job.HelmetProtectionTask;
+import com.tommytony.war.job.LogStatsJob;
 import com.tommytony.war.job.ScoreboardSwitchTimer;
 import com.tommytony.war.mapper.WarYmlMapper;
 import com.tommytony.war.mapper.WarzoneYmlMapper;
@@ -120,6 +122,8 @@ public class War extends JavaPlugin {
 	private KillstreakReward killstreakReward;
 	private List<Weapon> weapons = new ArrayList<Weapon>();
 	private MySQLConfig mysqlConfig;
+	private StatsConfig statsConfig;
+	private List<LogStatsJob.StatsRecord> statsQueue = new ArrayList<>();
 	private Economy econ = null;
 	private HubLobbyMaterials warhubMaterials = new HubLobbyMaterials(
 			new ItemStack(Material.GLASS), new ItemStack(Material.OAK_WOOD),
@@ -331,6 +335,7 @@ public class War extends JavaPlugin {
 		this.getCommandWhitelist().add("who");
 		this.setKillstreakReward(new KillstreakReward());
 		this.setMysqlConfig(new MySQLConfig());
+		this.setStatsConfig(new StatsConfig());
 
 		// Add constants
 		this.getDeadlyAdjectives().clear();
@@ -347,6 +352,15 @@ public class War extends JavaPlugin {
 		
 		WeaponYmlMapper.load();
 		this.setWeapons(this.getWeaponManager().getWeapons());
+		
+		// Initialize stats database
+		if (this.statsConfig.isEnabled()) {
+			try {
+				this.statsConfig.initialize();
+			} catch (Exception ex) {
+				this.log("Failed to initialize stats database: " + ex.getMessage(), Level.SEVERE);
+			}
+		}
 
 		// Start tasks
 		HelmetProtectionTask helmetProtectionTask = new HelmetProtectionTask();
@@ -356,6 +370,12 @@ public class War extends JavaPlugin {
 		cpt.runTaskTimer(this, 100, 20);
 		ScoreboardSwitchTimer sst = new ScoreboardSwitchTimer();
 		sst.runTaskTimer(this, 500, 20 * 60);
+		
+		// Start stats batching task
+		if (this.statsConfig.isEnabled()) {
+			int interval = this.statsConfig.getBatchInterval() * 20; // Convert to ticks
+			this.getServer().getScheduler().runTaskTimerAsynchronously(this, this::flushStatsQueue, interval, interval);
+		}
 
 		if (this.mysqlConfig.isEnabled()) {
 			try {
@@ -409,6 +429,12 @@ public class War extends JavaPlugin {
 	 * Cleans up war
 	 */
 	public void unloadWar() {
+		// Flush any remaining stats before shutdown
+		if (this.statsConfig != null && this.statsConfig.isEnabled()) {
+			this.flushStatsQueue();
+			this.statsConfig.close();
+		}
+		
 		for (Warzone warzone : this.warzones) {
 			warzone.unload();
 		}
@@ -1375,6 +1401,46 @@ public class War extends JavaPlugin {
 
 	public void setMysqlConfig(MySQLConfig mysqlConfig) {
 		this.mysqlConfig = mysqlConfig;
+	}
+
+	public StatsConfig getStatsConfig() {
+		return statsConfig;
+	}
+
+	public void setStatsConfig(StatsConfig statsConfig) {
+		this.statsConfig = statsConfig;
+	}
+
+	/**
+	 * Add a stats record to the queue for batched processing.
+	 * @param record The stats record to queue
+	 */
+	public synchronized void queueStatsRecord(LogStatsJob.StatsRecord record) {
+		if (!this.statsConfig.isEnabled()) {
+			return;
+		}
+		this.statsQueue.add(record);
+		
+		// Flush if batch size is reached
+		if (this.statsQueue.size() >= this.statsConfig.getBatchSize()) {
+			this.flushStatsQueue();
+		}
+	}
+
+	/**
+	 * Flush the stats queue to the database.
+	 */
+	public synchronized void flushStatsQueue() {
+		if (this.statsQueue.isEmpty()) {
+			return;
+		}
+		
+		com.google.common.collect.ImmutableList<LogStatsJob.StatsRecord> records = 
+			com.google.common.collect.ImmutableList.copyOf(this.statsQueue);
+		this.statsQueue.clear();
+		
+		LogStatsJob job = new LogStatsJob(records);
+		job.runTaskAsynchronously(this);
 	}
 
 	public String getString(String key) {

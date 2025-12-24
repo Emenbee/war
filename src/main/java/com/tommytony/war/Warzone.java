@@ -1192,6 +1192,26 @@ public class Warzone {
 		this.addKillCount(attacker.getName(), 1);
 		this.addKillDeathRecord(attacker, 1, 0);
 		this.addKillDeathRecord(defender, 0, 1);
+		
+		// Track stats in H2 database
+		if (War.war.getStatsConfig().isEnabled()) {
+			// Check if defender is carrying a flag
+			boolean isDefenderFlagCarrier = this.isFlagThief(defender);
+			
+			if (isDefenderFlagCarrier) {
+				// Track as flag carrier kill (counts as both a regular kill and a flag carrier kill)
+				War.war.queueStatsRecord(new com.tommytony.war.job.LogStatsJob.StatsRecord(
+					attacker, com.tommytony.war.job.LogStatsJob.StatsType.FLAG_CARRIER_KILL, this.getName()));
+			} else {
+				// Track as regular kill
+				War.war.queueStatsRecord(new com.tommytony.war.job.LogStatsJob.StatsRecord(
+					attacker, com.tommytony.war.job.LogStatsJob.StatsType.KILL, this.getName()));
+			}
+			
+			War.war.queueStatsRecord(new com.tommytony.war.job.LogStatsJob.StatsRecord(
+				defender, com.tommytony.war.job.LogStatsJob.StatsType.DEATH, this.getName()));
+		}
+		
 		if (attackerTeam.getTeamConfig().resolveBoolean(TeamConfig.XPKILLMETER)) {
 			attacker.setLevel(this.getKillCount(attacker.getName()));
 		}
@@ -1374,6 +1394,10 @@ public class Warzone {
 	}
 
 	public void reinitialize() {
+		// Flush stats before resetting warzone
+		if (War.war.getStatsConfig() != null && War.war.getStatsConfig().isEnabled()) {
+			War.war.flushStatsQueue();
+		}
 		this.isReinitializing = true;
 		this.getVolume().resetBlocksAsJob();
 	}
@@ -1620,6 +1644,10 @@ public class Warzone {
 	}
 
 	public void handleScoreCapReached(String winnersStr) {
+		// Flush stats before handling game end
+		if (War.war.getStatsConfig() != null && War.war.getStatsConfig().isEnabled()) {
+			War.war.flushStatsQueue();
+		}
 		// Score cap reached. Reset everything.
 		this.isEndOfGame = true;
 		List<Team> winningTeams = new ArrayList<Team>(teams.size());

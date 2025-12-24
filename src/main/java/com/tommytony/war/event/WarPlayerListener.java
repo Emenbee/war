@@ -960,6 +960,13 @@ public class WarPlayerListener implements Listener {
 						playerTeam.addPoint();
 						Team victim = playerWarzone.getVictimTeamForFlagThief(player);
 
+						// Track flag capture in H2 database
+						if (War.war.getStatsConfig().isEnabled()) {
+							War.war.queueStatsRecord(new com.tommytony.war.job.LogStatsJob.StatsRecord(
+								player, com.tommytony.war.job.LogStatsJob.StatsType.FLAG_CAPTURE, 
+								playerWarzone.getName()));
+						}
+
 						// Notify everyone
 						for (Team t : playerWarzone.getTeams()) {
 							t.teamcast("zone.flagcapture.broadcast", playerTeam.getKind().getColor() + player.getName() + ChatColor.WHITE,
